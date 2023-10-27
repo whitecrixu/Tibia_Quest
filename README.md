@@ -2,7 +2,7 @@
 <br>
 <b> 1.The Inquisition Quest
  </b><br>
- <b>2.Pits Of Inferno == In Progress</b>
+ <b>2.Pits Of Inferno == Testing</b>
 <br>
 
 All quest based on canary 3.0.0
