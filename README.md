@@ -7,4 +7,9 @@
 
 All quest based on canary 3.0.0
 <br>
-[Canary Repository](https://docs.opentibiabr.com/projects/canary)
+[Canary Official Repository](https://github.com/opentibiabr/canary)<br>
+[Canary Repository Crixu](https://github.com/whitecrixu/canary_clean)
+<br>
+
+<b>Script only tested on Canary 3.0.0</b><br>
+<b>MODIFED BY CRIXU</b>
