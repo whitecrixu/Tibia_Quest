@@ -4,7 +4,7 @@
  </b><br>
  <b>2.Pits Of Inferno</b>
 <br>
- <b>3.Svargrond Arena/b><br>
+ <b>3.Svargrond Arena</b><br>
 All quest based on canary 3.0.0
 <br>
 [Canary Official Repository](https://github.com/opentibiabr/canary)<br>
