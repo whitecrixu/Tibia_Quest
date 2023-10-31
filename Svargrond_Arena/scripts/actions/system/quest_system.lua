@@ -1,8 +1,6 @@
 local specialQuests = {
 	[51715] = Storage.SvargrondArena.RewardGreenhorn,
-	-- {x = 32232, y = 31059, z = 7}
 	[51716] = Storage.SvargrondArena.RewardScrapper,
-	-- {x = 32232, y = 31052, z = 7}
 	[51717] = Storage.SvargrondArena.RewardWarlord,
 }
 
