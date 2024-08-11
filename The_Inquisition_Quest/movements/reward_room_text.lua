@@ -1,7 +1,7 @@
-local textPos = {
-	{x = 3149, y = 4160, z = 6},
-	{x = 3150, y = 4160, z = 6},
-	{x = 3151, y = 4160, z = 6},
+local textPositions = {
+	Position(3149, 4160, 6),
+	Position(3150, 4160, 6),
+	Position(3151, 4160, 6),
 }
 
 local rewardRoomText = MoveEvent()
@@ -17,7 +17,8 @@ function rewardRoomText.onStepIn(creature, item, position, fromPosition)
 	return true
 end
 
-for a = 1, #textPos do
-	rewardRoomText:position(textPos[a])
+for _, pos in ipairs(textPositions) do
+	rewardRoomText:position(pos)
 end
+
 rewardRoomText:register()
