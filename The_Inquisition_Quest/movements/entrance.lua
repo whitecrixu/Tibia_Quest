@@ -6,17 +6,13 @@ function entrance.onStepIn(creature, item, position, fromPosition)
         return true
     end
 
-    if player:getLevel() >= 100 then
-        local destination = Position(3072, 4062, 8)
-        player:teleportTo(destination)
-        position:sendMagicEffect(CONST_ME_TELEPORT)
-        destination:sendMagicEffect(CONST_ME_TELEPORT)
-        return true
-    end
+    local destination = player:getLevel() >= 100 and Position(3072, 4062, 8) or fromPosition
+    player:teleportTo(destination, true)
 
-    player:teleportTo(fromPosition, true)
-    position:sendMagicEffect(CONST_ME_TELEPORT)
-    fromPosition:sendMagicEffect(CONST_ME_TELEPORT)
+    local teleportEffect = CONST_ME_TELEPORT
+    position:sendMagicEffect(teleportEffect)
+    destination:sendMagicEffect(teleportEffect)
+
     return true
 end
 
