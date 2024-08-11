@@ -1,74 +1,52 @@
 local internalNpcName = "Henricus"
 local npcType = Game.createNpcType(internalNpcName)
-local npcConfig = {}
-
-npcConfig.name = internalNpcName
-npcConfig.description = internalNpcName
-
-npcConfig.health = 100
-npcConfig.maxHealth = npcConfig.health
-npcConfig.walkInterval = 2000
-npcConfig.walkRadius = 2
-
-npcConfig.outfit = {
-	lookType = 132,
-	lookHead = 79,
-	lookBody = 0,
-	lookLegs = 96,
-	lookFeet = 0,
-	lookAddons = 0,
+local npcConfig = {
+	name = internalNpcName,
+	description = internalNpcName,
+	health = 100,
+	maxHealth = 100,
+	walkInterval = 2000,
+	walkRadius = 2,
+	outfit = {
+		lookType = 132,
+		lookHead = 79,
+		lookBody = 0,
+		lookLegs = 96,
+		lookFeet = 0,
+		lookAddons = 0,
+	},
+	flags = { floorchange = false },
 }
 
-npcConfig.flags = {
-	floorchange = false,
-}
-
+-- Keyword handler and NPC handler initialization
 local keywordHandler = KeywordHandler:new()
 local npcHandler = NpcHandler:new(keywordHandler)
 
-npcType.onThink = function(npc, interval)
-	npcHandler:onThink(npc, interval)
-end
-
-npcType.onAppear = function(npc, creature)
-	npcHandler:onAppear(npc, creature)
-end
-
-npcType.onDisappear = function(npc, creature)
-	npcHandler:onDisappear(npc, creature)
-end
-
-npcType.onMove = function(npc, creature, fromPosition, toPosition)
-	npcHandler:onMove(npc, creature, fromPosition, toPosition)
-end
-
-npcType.onSay = function(npc, creature, type, message)
-	npcHandler:onSay(npc, creature, type, message)
-end
-
-npcType.onCloseChannel = function(npc, creature)
-	npcHandler:onCloseChannel(npc, creature)
-end
+-- Link NPC events to the npcHandler methods
+npcType.onThink = function(npc, interval) npcHandler:onThink(npc, interval) end
+npcType.onAppear = function(npc, creature) npcHandler:onAppear(npc, creature) end
+npcType.onDisappear = function(npc, creature) npcHandler:onDisappear(npc, creature) end
+npcType.onMove = function(npc, creature, fromPosition, toPosition) npcHandler:onMove(npc, creature, fromPosition, toPosition) end
+npcType.onSay = function(npc, creature, type, message) npcHandler:onSay(npc, creature, type, message) end
+npcType.onCloseChannel = function(npc, creature) npcHandler:onCloseChannel(npc, creature) end
 
 local flaskCost = 1000
 
+-- Function to handle NPC dialogues and interactions
 local function creatureSayCallback(npc, creature, type, message)
-	local player = Player(creature)
+	local player = creature:getPlayer()
+	if not npcHandler:checkInteraction(npc, creature) then return false end
+
 	local playerId = player:getId()
-
-	if not npcHandler:checkInteraction(npc, creature) then
-		return false
-	end
-
 	local missing, totalBlessPrice = Blessings.getInquisitionPrice(player)
 
 	if MsgContains(message, "inquisitor") then
 		npcHandler:say("The churches of the gods entrusted me with the enormous and responsible task to lead the inquisition. I leave the field work to inquisitors who I recruit from fitting people that cross my way.", npc, creature)
 	elseif MsgContains(message, "join") then
-			npcHandler:say("Do you want to join the inquisition?", npc, creature)
-			npcHandler:setTopic(playerId, 2)
+		npcHandler:say("Do you want to join the inquisition?", npc, creature)
+		npcHandler:setTopic(playerId, 2)
 	elseif MsgContains(message, "blessing") or MsgContains(message, "bless") then
-		if player:getStorageValue(Storage.TheInquisition.Questline) == 25 then --if quest is done
+		if player:getStorageValue(Storage.TheInquisition.Questline) == 25 then
 			npcHandler:say("Do you want to receive the blessing of the inquisition - which means " .. (missing == 5 and "all five available" or missing) .. " blessings - for " .. totalBlessPrice .. " gold?", npc, creature)
 			npcHandler:setTopic(playerId, 7)
 		else
@@ -76,7 +54,7 @@ local function creatureSayCallback(npc, creature, type, message)
 			npcHandler:setTopic(playerId, 0)
 		end
 	elseif MsgContains(message, "flask") or MsgContains(message, "special flask") then
-		if player:getStorageValue(Storage.TheInquisition.Questline) >= 12 then -- give player the ability to purchase the flask.
+		if player:getStorageValue(Storage.TheInquisition.Questline) >= 12 then
 			npcHandler:say("Do you want to buy the special flask of holy water for " .. flaskCost .. " gold?", npc, creature)
 			npcHandler:setTopic(playerId, 8)
 		else
@@ -84,120 +62,52 @@ local function creatureSayCallback(npc, creature, type, message)
 			npcHandler:setTopic(playerId, 0)
 		end
 	elseif MsgContains(message, "mission") or MsgContains(message, "report") then
-		if player:getStorageValue(Storage.TheInquisition.Questline) < 1 then
+		local questline = player:getStorageValue(Storage.TheInquisition.Questline)
+		if questline < 1 then
 			npcHandler:say("Do you want to join the inquisition?", npc, creature)
 			npcHandler:setTopic(playerId, 2)
-		elseif player:getStorageValue(Storage.TheInquisition.Questline) == 1 then
+		elseif questline == 1 then
 			npcHandler:say({
 				"Let's see if you are worthy. Take an inquisitor's field guide from the box in the back room. ...",
 				"Follow the instructions in the guide to talk to the Thaian guards that protect the walls and gates of the city and test their loyalty. Then report to me about your {mission}.",
 			}, npc, creature)
-			npcHandler:say("Destroy the shadow nexus using this vial of holy water and kill all demon lords.", npc, creature)
-			player:setStorageValue(Storage.TheInquisition.Mission07, 1) -- The Inquisition Questlog- "Mission 7: The Shadow Nexus"
+			player:setStorageValue(Storage.TheInquisition.Mission07, 1)
 			player:addItem(133, 1)
 			npcHandler:setTopic(playerId, 0)
-		elseif player:getStorageValue(Storage.TheInquisition.Questline) == 21 or player:getStorageValue(Storage.TheInquisition.Questline) == 22 then
+		elseif questline == 21 or questline == 22 then
 			npcHandler:say("Your current mission is to destroy the shadow nexus in the Demon Forge. Are you done with that mission?", npc, creature)
 			npcHandler:setTopic(playerId, 6)
 		end
 	elseif MsgContains(message, "yes") then
-		if npcHandler:getTopic(playerId) == 2 then
+		local topic = npcHandler:getTopic(playerId)
+		if topic == 2 then
 			npcHandler:say("So be it. Now you are a member of the inquisition. You might ask me for a {mission} to raise in my esteem.", npc, creature)
 			npcHandler:setTopic(playerId, 0)
-		elseif npcHandler:getTopic(playerId) == 3 then
-			npcHandler:say({
-					"Incredible! You're a true defender of faith! I grant you the title of a High Inquisitor for your noble deeds. From now on you can obtain the blessing of the inquisition which makes the pilgrimage of ashes obsolete ...",
-					"The blessing of the inquisition will bestow upon you all available blessings for the price of 110000 gold. Also, don't forget to ask me about your {outfit} to receive the final addon as demon hunter.",
-				}, npc, creature)
-				player:setStorageValue(Storage.TheInquisition.Mission07, 3) -- The Inquisition Questlog- "Mission 7: The Shadow Nexus"
-				player:addAchievement("High Inquisitor")
-			else
-				npcHandler:say("Come back when you have destroyed the shadow nexus.", npc, creature)
-			end
-			npcHandler:setTopic(playerId, 0)
-		elseif npcHandler:getTopic(playerId) == 8 then
+		elseif topic == 8 then
 			if player:removeMoneyBank(flaskCost) then
-				npcHandler:say("Here is your new flask!, |PLAYERNAME|.", npc, creature)
+				npcHandler:say("Here is your new flask!", npc, creature)
 				player:addItem(133, 1)
 			else
 				npcHandler:say("Come back when you have enough money.", npc, creature)
 			end
 			npcHandler:setTopic(playerId, 0)
-		elseif npcHandler:getTopic(playerId) == 7 then
+		elseif topic == 7 then
 			if missing == 0 then
 				npcHandler:say("You already have been blessed!", npc, creature)
 			elseif player:removeMoneyBank(totalBlessPrice) then
-				npcHandler:say("You have been blessed by all of five gods!, |PLAYERNAME|.", npc, creature)
+				npcHandler:say("You have been blessed by all five gods!", npc, creature)
 				player:addMissingBless(false)
 				player:getPosition():sendMagicEffect(CONST_ME_HOLYAREA)
 			else
 				npcHandler:say("Come back when you have enough money.", npc, creature)
 			end
-			npcHandler:say("Here is the final addon for your demon hunter outfit. Congratulations!", npc, creature)
-			player:setStorageValue(Storage.TheInquisition.Mission07, 4) -- The Inquisition Questlog- "Mission 7: The Shadow Nexus"
-			player:setStorageValue(Storage.TheInquisition.RewardDoor, 1)
-			player:addOutfitAddon(288, 1)
-			player:addOutfitAddon(289, 1)
-			player:addOutfitAddon(288, 2)
-			player:addOutfitAddon(289, 2)
-			player:getPosition():sendMagicEffect(CONST_ME_MAGIC_BLUE)
-			player:addAchievement("Demonbane")
 			npcHandler:setTopic(playerId, 0)
-		elseif MsgContains(message, "dark") then
-		npcHandler:say({
-			"The dark powers are always present. If a human shows only the slightest weakness, they try to corrupt him and to lure him into their service. ...",
-			"We must be constantly aware of evil that comes in many disguises.",
-		}, npc, creature)
-		npcHandler:setTopic(playerId, 0)
-	elseif MsgContains(message, "king") then
-		npcHandler:say({
-			"The Thaian kings are crowned by a representative of the churches. This means they reign in the name of the gods of good and are part of the godly plan for humanity. ...",
-			"As nominal head of the church of Banor, the kings aren't only worldly but also spiritual authorities. ...",
-			"The kings fund the inquisition and sometimes provide manpower in matters of utmost importance. The inquisition, in return, protects the realm from heretics and individuals that aim to undermine the holy reign of the kings.",
-		}, npc, creature)
-		npcHandler:setTopic(playerId, 0)
-	elseif MsgContains(message, "banor") then
-		npcHandler:say({
-			"In the past, the order of Banor was the only order of knighthood in existence. In the course of time, the order concentrated more and more on spiritual matters rather than on worldly ones. ...",
-			"Nowadays, the order of Banor sanctions new orders and offers spiritual guidance to the fighters of good.",
-		}, npc, creature)
-		npcHandler:setTopic(playerId, 0)
-	elseif MsgContains(message, "fardos") then
-		npcHandler:say("The priests of Fardos are often mystics who have secluded themselves from worldly matters. Others provide guidance and healing to people in need in the temples.", npc, creature)
-		npcHandler:setTopic(playerId, 0)
-	elseif MsgContains(message, "uman") then
-		npcHandler:say({
-			"The church of Uman oversees the education of the masses as well as the doings of the sorcerer and druid guilds. It decides which lines of research are in accordance with the will of Uman and which are not. ...",
-			"Concerned, the inquisition watches the attempts of these guilds to become more and more independent and to make own decisions. ...",
-			"Unfortunately, the sorcerer guild has become dangerously influential and so the hands of our priests are tied due to political matters ...",
-			"The druids lately claim that they are serving Crunor's will and not Uman's. Such heresy could only become possible with the independence of Carlin from the Thaian kingdom. ...",
-			"The spiritual centre of the druids switched to Carlin where they have much influence and cannot be supervised by the inquisition.",
-		}, npc, creature)
-		npcHandler:setTopic(playerId, 0)
-	elseif MsgContains(message, "fafnar") then
-		npcHandler:say({
-			"Fafnar is mostly worshipped by the peasants and farmers in rural areas. ...",
-			"The inquisition has a close eye on these activities. Simply people tend to mix local superstitions with the teachings of the gods. This again may lead to heretical subcults.",
-		}, npc, creature)
-		npcHandler:setTopic(playerId, 0)
-	elseif MsgContains(message, "edron") then
-		npcHandler:say({
-			"Edron illustrates perfectly why the inquisition is needed and why we need more funds and manpower. ...",
-			"Our agents were on their way to investigate certain occurrences there when some faithless knights fled to some unholy ruins. ...",
-			"We were unable to wipe them out and the local order of knighthood was of little help. ...",
-			"It's almost sure that something dangerous is going on there, so we have to continue our efforts.",
-		}, npc, creature)
-		npcHandler:setTopic(playerId, 0)
-	elseif MsgContains(message, "ankrahmun") then
-		npcHandler:say({
-			"Even though they claim differently, this city is in the firm grip of Zathroth and his evil minions. Their whole twisted religion is a mockery of the teachings of our gods ...",
-			"As soon as we have gathered the strength, we should crush this city once and for all.",
-		}, npc, creature)
-		npcHandler:setTopic(playerId, 0)
+		end
 	end
 	return true
 end
 
+-- Adding dialogue keywords and their respective responses
 keywordHandler:addKeyword({ "paladin" }, StdModule.say, { npcHandler = npcHandler, text = "It's a shame that only a few paladins still use their abilities to further the cause of the gods of good. Too many paladins have become selfish and greedy." })
 keywordHandler:addKeyword({ "knight" }, StdModule.say, { npcHandler = npcHandler, text = "Nowadays, most knights seem to have forgotten the noble cause to which all knights were bound in the past. Only a few have remained pious, serve the gods and follow their teachings." })
 keywordHandler:addKeyword({ "sorcerer" }, StdModule.say, { npcHandler = npcHandler, text = "Those who wield great power have to resist great temptations. We have the burden to eliminate all those who give in to the temptations." })
@@ -220,26 +130,31 @@ keywordHandler:addKeyword({ "believer" }, StdModule.say, { npcHandler = npcHandl
 keywordHandler:addKeyword({ "job" }, StdModule.say, { npcHandler = npcHandler, text = "By edict of the churches I'm the Lord Inquisitor." })
 keywordHandler:addKeyword({ "name" }, StdModule.say, { npcHandler = npcHandler, text = "I'm Henricus, the Lord Inquisitor." })
 
+-- Setting NPC messages
 npcHandler:setMessage(MESSAGE_GREET, "Greetings, fellow {believer} |PLAYERNAME|!")
 npcHandler:setMessage(MESSAGE_FAREWELL, "Always be on guard, |PLAYERNAME|!")
 npcHandler:setMessage(MESSAGE_WALKAWAY, "This ungraceful haste is most suspicious!")
 
 npcHandler:setCallback(CALLBACK_MESSAGE_DEFAULT, creatureSayCallback)
-npcHandler:addModule(FocusModule:new(), npcConfig.name, true, true, true)
+npcHandler:addModule(FocusModule:new())
 
+-- NPC shop configuration
 npcConfig.shop = {
 	{ itemName = "holy water", clientId = 133, buy = 1000 },
 }
--- On buy npc shop message
+
+-- On buy item event for the shop
 npcType.onBuyItem = function(npc, player, itemId, subType, amount, ignore, inBackpacks, totalCost)
 	npc:sellItem(player, itemId, amount, subType, 0, ignore, inBackpacks)
 end
--- On sell npc shop message
+
+-- On sell item event for the shop
 npcType.onSellItem = function(npc, player, itemId, subtype, amount, ignore, name, totalCost)
 	player:sendTextMessage(MESSAGE_INFO_DESCR, string.format("Sold %ix %s for %i gold.", amount, name, totalCost))
 end
--- On check npc shop message (look item)
+
+-- On check item event for the shop (item inspection)
 npcType.onCheckItem = function(npc, player, clientId, subType) end
 
--- npcType registering the npcConfig table
+-- Registering the NPC with the npcConfig table
 npcType:register(npcConfig)
