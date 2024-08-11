@@ -1,3 +1,4 @@
+-- Configuration table for bosses and their storage values
 local bosses = {
     ["ushuriel"] = 200,
     ["zugurosh"] = 201,
@@ -8,7 +9,9 @@ local bosses = {
     ["hellgorak"] = 205,
 }
 
+-- CreatureEvent for handling Inquisition boss kills
 local inquisitionBossKill = CreatureEvent("InquisitionBossKill")
+
 function inquisitionBossKill.onKill(player, target)
     local targetMonster = target:getMonster()
     if not targetMonster then
@@ -17,20 +20,20 @@ function inquisitionBossKill.onKill(player, target)
 
     local targetName = targetMonster:getName():lower()
     local bossStorage = bosses[targetName]
+
     if not bossStorage then
         return true
     end
 
-    local newValue = 2
-    if targetName == "latrivan" or targetName == "golgordan" then
-        newValue = math.max(0, Game.getStorageValue(bossStorage)) + 1
-    end
+    local currentValue = Game.getStorageValue(bossStorage)
+    local newValue = (targetName == "latrivan" or targetName == "golgordan") and math.max(0, currentValue) + 1 or 2
     Game.setStorageValue(bossStorage, newValue)
 
     if newValue == 2 then
         player:say("You now have 10 minutes to exit this room through the teleporter. It will bring you to the next room.", TALKTYPE_MONSTER_SAY)
         addEvent(Game.setStorageValue, 10 * 60 * 1000, bossStorage, 0)
     end
+
     return true
 end
 
